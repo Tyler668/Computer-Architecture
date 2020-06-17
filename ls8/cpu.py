@@ -12,6 +12,8 @@ class CPU:
         self.pc = 0
         # self.ir = 0
         self.reg = [0] * 8
+        self.reg[7] = 0xF4
+        self.sp = 7
         self.ldi = 0b10000010
         self.mul = 0b10100010
         self.prn = 0b01000111
@@ -21,7 +23,8 @@ class CPU:
         self.fl = None
         self.im = None
         self.ist = None
-        self.sp = None
+        self.push = 0b01000101
+        self.pop = 0b01000110
 
     def ram_read(self, address):
         return self.ram[address]
@@ -91,17 +94,46 @@ class CPU:
                 print(self.reg[reg_addr])
                 self.pc += 2
 
-            elif ir == self.hlt:
-                running = False
-                self.pc += 1
-
             elif ir == self.mul:
                 op1 = self.reg[0]
                 op2 = self.reg[1]
                 product = (op1 * op2)
                 self.reg[0] = product
-                # print(product)
                 self.pc += 3
+
+            elif ir == self.push:
+                # Decrement stack pointer
+                # print('self.reg:', self.reg)
+                self.reg[self.sp] -= 1
+                # Copy value from register into memory
+                reg_addr = self.ram[self.pc+1]
+                value = self.reg[reg_addr]  # This is what we want to push
+
+                address = self.reg[self.sp]
+                self.ram[address] = value
+
+                self.pc += 2
+
+            elif ir == self.pop:
+                # Get value in ram at SP
+                ram_addr = self.reg[self.sp]
+                value = self.ram[ram_addr]
+
+                # Find correct place in reg to put value with instructions at pc + 1
+                reg_addr = self.ram[self.pc + 1]
+
+                # Set correct reg address to new value
+                self.reg[reg_addr] = value
+
+                # Increment stack pointer
+                self.reg[self.sp] += 1
+
+                # Iterate pc
+                self.pc += 2
+
+            elif ir == self.hlt:
+                running = False
+                self.pc += 1
 
             else:
                 print(f'Unknown instruction {ir} at address {self.pc}')
@@ -109,8 +141,18 @@ class CPU:
 
 
 processor = CPU()
+
+# Print 8
 # processor.load(
 #     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\print8.ls8")
+# processor.run()
+
+# Multiply
+# processor.load(
+#     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\mult.ls8")
+# processor.run()
+
+# Stack
 processor.load(
-    "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\mult.ls8")
+    "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\stack.ls8")
 processor.run()
