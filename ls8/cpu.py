@@ -21,12 +21,12 @@ class CPU:
         self.ist = None
 
         self.func_registry = {
-            int(0b10000010): self.do_ldi,
-            int(0b01000111): self.do_prn,
-            int(0b10100010): self.do_mul,
-            int(0b01000101): self.do_push,
-            int(0b01000110): self.do_pop,
-            int(0b00000001): self.do_hlt
+            0b10000010: self.do_ldi,
+            0b01000111: self.do_prn,
+            0b10100010: self.do_mul,
+            0b01000101: self.do_push,
+            0b01000110: self.do_pop,
+            0b00000001: self.do_hlt
         }
 
     def ram_read(self, address):
@@ -140,22 +140,22 @@ class CPU:
                 sys.exit(1)
 
 
-processor = CPU()
+ls8 = CPU()
 
 # Print 8
-# processor.load(
+# ls8.load(
 #     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\print8.ls8")
-# processor.run()
+# ls8.run()
 
 # Multiply
-# processor.load(
+# ls8.load(
 #     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\mult.ls8")
-# processor.run()
+# ls8.run()
 
 # Stack
-processor.load(
+ls8.load(
     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\stack.ls8")
-processor.run()
+ls8.run()
 
 
 # ORIGINAL INEFFICIENT IFELIF
