@@ -1,0 +1,57 @@
+        self.func_registry = {
+            0b10000010: self.do_ldi(),
+            0b01000111: self.do_prn(),
+            0b10100010: self.do_mul(),
+            0b01000101: self.do_push(),
+            0b01000110: self.do_pop()
+        }
+
+
+
+
+            def do_ldi(self):
+        reg_addr = self.ram_read(self.pc + 1)
+        value = self.ram_read(self.pc + 2)
+        self.reg[reg_addr] = value
+        self.pc += 3
+
+    def do_prn(self):
+        reg_addr = self.ram_read(self.pc + 1)
+        print(self.reg[reg_addr])
+        self.pc += 2
+
+    def do_mul(self):
+        op1 = self.reg[0]
+        op2 = self.reg[1]
+        product = (op1 * op2)
+        self.reg[0] = product
+        self.pc += 3
+
+    def do_push(self):
+        # Decrement stack pointer
+        # print('self.reg:', self.reg)
+        self.reg[self.sp] -= 1
+        # Copy value from register into memory
+        reg_addr = self.ram[self.pc+1]
+        value = self.reg[reg_addr]  # This is what we want to push
+
+        address = self.reg[self.sp]
+        self.ram[address] = value
+
+        self.pc += 2
+
+    def do_pop(self):
+        ram_addr = self.reg[self.sp]
+        value = self.ram[ram_addr]
+
+        # Find correct place in reg to put value with instructions at pc + 1
+        reg_addr = self.ram[self.pc + 1]
+
+        # Set correct reg address to new value
+        self.reg[reg_addr] = value
+
+        # Increment stack pointer
+        self.reg[self.sp] += 1
+
+        # Iterate pc
+        self.pc += 2
