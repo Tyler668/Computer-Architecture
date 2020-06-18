@@ -13,6 +13,8 @@ class CPU:
         self.pc = 0
         self.reg = [0] * 8
         self.reg[7] = 0xF4
+        self.reg[4] = 0b00000000
+        # self.reg[4] = self.reg[4]
         self.sp = 7
         self.mar = None
         self.mdr = None
@@ -26,7 +28,14 @@ class CPU:
             0b10100010: self.do_mul,
             0b01000101: self.do_push,
             0b01000110: self.do_pop,
-            0b00000001: self.do_hlt
+            0b00000001: self.do_hlt,
+            0b01010000: self.do_call,
+            0b00010001: self.do_ret,
+            0b10100000: self.do_add,
+            0b10100111: self.do_cmp,
+            0b01010101: self.do_jeq,
+            0b01010110: self.do_jne,
+            0b01010100: self.do_jmp
         }
 
     def ram_read(self, address):
@@ -44,6 +53,8 @@ class CPU:
             for line in f:
                 line = line.split('#')
                 line = line[0].strip()
+                # print(int(line, 2))
+
                 if line != '':
                     line = int(line, 2)
                     self.ram[address] = line
@@ -129,8 +140,75 @@ class CPU:
         self.running = False
         self.pc += 1
 
+    def do_add(self):
+        op1 = self.reg[self.ram[self.pc + 1]]
+        op2 = self.reg[self.ram[self.pc + 2]]
+        sum = op1 + op2
+
+        self.reg[0] = sum
+        self.pc += 3
+
+    def do_call(self):
+        ret_addr = self.pc + 2
+
+        self.reg[self.sp] -= 1
+        self.ram[self.reg[self.sp]] = ret_addr
+
+        reg_num = self.ram[self.pc + 1]
+        subroutine_addr = self.reg[reg_num]
+
+        self.pc = subroutine_addr
+
+    def do_ret(self):
+        ret_addr = self.ram[self.reg[self.sp]]
+
+        self.reg[self.sp] += 1
+
+        self.pc = ret_addr
+
+    def do_cmp(self):
+        op1 = self.reg[self.ram[self.pc + 1]]
+        op2 = self.reg[self.ram[self.pc + 2]]
+        if op1 < op2:
+            self.reg[4] = 0b00000100
+        elif op1 > op2:
+            self.reg[4] = 0b00000010
+        elif op1 == op2:
+            self.reg[4] = 0b00000001
+
+        self.pc += 3
+
+    def do_jeq(self):
+        regStr = str(bin(self.reg[4]))
+        lastDigit = regStr[-1]
+        lastDigit = int(lastDigit)
+
+        if lastDigit == 1:
+            jump_to = self.reg[self.ram[self.pc + 1]]
+            self.pc = jump_to
+        else:
+            self.pc += 2
+
+    def do_jne(self):
+        regStr = str(bin(self.reg[4]))
+        lastDigit = regStr[-1]
+        lastDigit = int(lastDigit)
+
+        if lastDigit == 0:
+            jump_to = self.reg[self.ram[self.pc + 1]]
+            self.pc = jump_to
+        else:
+            self.pc += 2
+
+    def do_jmp(self):
+        self.pc = self.reg[self.ram[self.pc + 1]]
+
     def run(self):
         """Run the CPU."""
+
+        # for code in self.func_registry.keys():
+        #     print(code)
+
         while self.running:
             ir = self.ram[self.pc]  # Instruction register
             self.func_registry[ir]()
@@ -153,67 +231,14 @@ ls8 = CPU()
 # ls8.run()
 
 # Stack
-ls8.load(
-    "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\stack.ls8")
+# ls8.load(
+#     "C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\stack.ls8")
+# ls8.run()
+
+# Call / Ret
+# ls8.load("C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\call.ls8")
+# ls8.run()
+
+# Sprint
+ls8.load("C:\\Users\\tyler\\Documents\\github\\Computer-Architecture\\ls8\\examples\\sctest.ls8")
 ls8.run()
-
-
-# ORIGINAL INEFFICIENT IFELIF
-# May need later:
-# --------------------------------------------------------
-# print(type(ir))
-# print('IR', ir)
-# print('Bin to Int', 0b10000010)
-# self.func_registry[int(ir)].__call__
-# relevant_func.__call__
-# if ir == self.ldi:
-#     reg_addr = self.ram_read(self.pc + 1)
-#     value = self.ram_read(self.pc + 2)
-#     self.reg[reg_addr] = value
-#     self.pc += 3
-
-# elif ir == self.prn:
-#     reg_addr = self.ram_read(self.pc + 1)
-#     print(self.reg[reg_addr])
-#     self.pc += 2
-
-# elif ir == self.mul:
-#     op1 = self.reg[0]
-#     op2 = self.reg[1]
-#     product = (op1 * op2)
-#     self.reg[0] = product
-#     self.pc += 3
-
-# elif ir == self.push:
-#     # Decrement stack pointer
-#     # print('self.reg:', self.reg)
-#     self.reg[self.sp] -= 1
-#     # Copy value from register into memory
-#     reg_addr = self.ram[self.pc+1]
-#     value = self.reg[reg_addr]  # This is what we want to push
-
-#     address = self.reg[self.sp]
-#     self.ram[address] = value
-
-#     self.pc += 2
-
-# elif ir == self.pop:
-#     # Get value in ram at SP
-#     ram_addr = self.reg[self.sp]
-#     value = self.ram[ram_addr]
-
-#     # Find correct place in reg to put value with instructions at pc + 1
-#     reg_addr = self.ram[self.pc + 1]
-
-#     # Set correct reg address to new value
-#     self.reg[reg_addr] = value
-
-#     # Increment stack pointer
-#     self.reg[self.sp] += 1
-
-#     # Iterate pc
-#     self.pc += 2
-
-# if ir == self.hlt:
-#     running = False
-#     self.pc += 1
